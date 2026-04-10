@@ -1,0 +1,51 @@
+// Prisma schema for multi-vendor support
+// Adjust datasource and generator as needed for your environment
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  walletAddress String   @unique
+  passwordHash  String?
+  createdAt     DateTime @default(now())
+
+  transactionsSent     Transaction[] @relation("Sender")
+  transactionsReceived Transaction[] @relation("Receiver")
+}
+
+model Vendor {
+  id            String   @id @default(uuid())
+  name          String
+  category      String
+  walletAddress String   @unique
+  createdAt     DateTime @default(now())
+
+  transactions  Transaction[]
+}
+
+model Transaction {
+  id             String   @id @default(uuid())
+  senderWallet   String
+  receiverWallet String
+  amount         Float
+  txHash         String
+  type           String
+  createdAt      DateTime @default(now())
+
+  senderId   String?
+  receiverId String?
+  vendorId   String?
+
+  sender   User?   @relation("Sender", fields: [senderId], references: [id])
+  receiver User?   @relation("Receiver", fields: [receiverId], references: [id])
+  vendor   Vendor? @relation(fields: [vendorId], references: [id])
+}
